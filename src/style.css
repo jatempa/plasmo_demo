@@ -1,0 +1,20 @@
+.plasmo-floating-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 9999;
+  padding: 12px 24px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s;
+}
+
+.plasmo-floating-btn:hover {
+  transform: scale(1.05);
+  background-color: #45a049;
+}
