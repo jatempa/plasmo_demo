@@ -1,28 +1,45 @@
 import { useState } from "react"
 
 function SidePanel() {
-  const [data, setData] = useState("")
+  const [message, setMessage] = useState("")
+
+  const sendToPage = async () => {
+    // 1. Get the active tab in the current window
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+
+    if (tab?.id) {
+      // 2. Send a message to the content script in that tab
+      await chrome.tabs.sendMessage(tab.id, {
+        action: "update_page_text",
+        payload: message
+      })
+    }
+  }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        padding: 16,
-        width: "100%",
-        height: "100vh",
-        backgroundColor: "#f0f0f0"
-      }}>
-      <h2>My Side Panel</h2>
-      <p>This panel was triggered by the floating button!</p>
-      <p>{data}</p>
+    <div style={{ display: "flex", flexDirection: "column", padding: 16 }}>
+      <h2>Control Panel</h2>
 
-      <input
-        onChange={(e) => setData(e.target.value)}
-        value={data}
-        placeholder="Type something..."
-        style={{ padding: 8, marginTop: 10 }}
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder="Type a message for the page..."
+        rows={4}
+        style={{ width: "100%", marginBottom: 10, padding: 5 }}
       />
+
+      <button
+        onClick={sendToPage}
+        style={{
+          padding: "10px",
+          backgroundColor: "#007AFF",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer"
+        }}>
+        Send to Page
+      </button>
     </div>
   )
 }
