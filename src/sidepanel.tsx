@@ -1,7 +1,28 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 function SidePanel() {
   const [message, setMessage] = useState("")
+
+  useEffect(() => {
+    // 1. Get the current window ID so we can identify ourselves
+    chrome.windows.getCurrent().then((win) => {
+      if (win.id) {
+        // 2. Connect to background script
+        // We name the port "sidepanel-{windowId}" so background knows who we are
+        const port = chrome.runtime.connect({ name: `sidepanel-${win.id}` })
+
+        // 3. Listen for the "close_panel" command from background
+        port.onMessage.addListener((msg) => {
+          if (msg.action === "close_panel") {
+            window.close() // This closes the side panel
+          }
+        })
+
+        // Cleanup on unmount
+        return () => port.disconnect()
+      }
+    })
+  }, [])
 
   const sendToPage = async () => {
     // 1. Get the active tab in the current window

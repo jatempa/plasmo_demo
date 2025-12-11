@@ -32,7 +32,7 @@ const FloatingButton = () => {
   }, [])
 
   const toggleSidePanel = () => {
-    chrome.runtime.sendMessage({ action: "open_side_panel" })
+    chrome.runtime.sendMessage({ action: "toggle_side_panel" })
   }
 
   return (
@@ -41,7 +41,8 @@ const FloatingButton = () => {
       <div className="plasmo-message-bubble">Received: {pageText}</div>
 
       <button onClick={toggleSidePanel} className="plasmo-floating-btn">
-        Open Panel
+        {/* You could even change this text based on state if you listen to messages */}
+        Toggle Panel
       </button>
     </div>
   )
