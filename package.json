@@ -25,7 +25,7 @@
   },
   "manifest": {
     "host_permissions": [
-      "http://localhost:5500/*"
+      "<all_urls>"
     ],
     "permissions": [
       "sidePanel"

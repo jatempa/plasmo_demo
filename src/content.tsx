@@ -3,7 +3,7 @@ import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import { useEffect, useRef, useState } from "react"
 
 export const config: PlasmoCSConfig = {
-  matches: ["http://localhost:5500/*"]
+  matches: ["<all_urls>"]
 }
 
 export const getStyle: PlasmoGetStyle = () => {
