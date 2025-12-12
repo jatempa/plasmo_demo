@@ -18,7 +18,7 @@ chrome.runtime.onConnect.addListener((port) => {
 })
 
 // 2. Handle the Toggle Message from Content Script
-chrome.runtime.onMessage.addListener(async (message, sender) => {
+chrome.runtime.onMessage.addListener((message, sender) => {
   if (message.action === "toggle_side_panel") {
     const windowId = sender.tab?.windowId
 
@@ -32,7 +32,9 @@ chrome.runtime.onMessage.addListener(async (message, sender) => {
         // SCENARIO B: Panel is CLOSED -> Open it
         // Open the side panel for the current window
         // sender.tab.windowId ensures it opens in the window where the button was clicked
-        await chrome.sidePanel.open({ windowId })
+        chrome.sidePanel.open({ windowId }).catch((err) => {
+          console.error("Failed to open side panel:", err)
+        })
       }
     }
   }
