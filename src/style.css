@@ -1,39 +1,57 @@
+/* Main container mostly controls position */
 .plasmo-container {
   position: fixed;
-  bottom: 30px;
-  right: 30px;
+  /* Top is controlled by JS */
+  right: 0;
   z-index: 9999;
   display: flex;
   flex-direction: column;
-  align-items: flex-end; /* Align items to the right */
+  align-items: flex-end;
   gap: 10px;
+  transform: translateY(-50%);
+  /* Centered on the pivot point */
 }
 
+/* The wrapper for the split button */
 .plasmo-floating-btn {
-  padding: 12px 24px;
+  display: flex;
+  flex-direction: row;
   background-color: #4caf50;
   color: white;
-  border: none;
-  border-radius: 50px;
+  border-radius: 8px 0 0 8px;
+  /* Rounded on left only */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  font-weight: bold;
+  overflow: hidden;
+  /* To clip children */
   transition: transform 0.2s;
 }
 
-.plasmo-floating-btn:hover {
-  transform: scale(1.05);
-  background-color: #45a049;
+.plasmo-btn-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.plasmo-message-bubble {
-  background-color: white;
-  color: #333;
-  padding: 10px 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  font-family: sans-serif;
-  font-size: 14px;
-  max-width: 200px;
-  border: 1px solid #e0e0e0;
+.plasmo-btn-toggle:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.plasmo-btn-drag {
+  cursor: ns-resize;
+  /* North-South resize cursor */
+  padding: 10px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.plasmo-btn-drag:hover {
+  background-color: rgba(0, 0, 0, 0.1);
 }
