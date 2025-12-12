@@ -45,11 +45,21 @@
 .plasmo-btn-drag {
   cursor: ns-resize;
   /* North-South resize cursor */
-  padding: 10px 6px;
+  padding: 10px 0;
+  max-width: 0;
+  opacity: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.plasmo-floating-btn:hover .plasmo-btn-drag {
+  padding: 10px 6px;
+  max-width: 40px;
+  opacity: 1;
 }
 
 .plasmo-btn-drag:hover {
