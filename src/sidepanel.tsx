@@ -3,6 +3,8 @@ import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-rou
 
 import "./style.css"
 
+const WAITING_TIME = 5;
+
 function SidePanel() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -10,6 +12,10 @@ function SidePanel() {
   const [isLoading, setIsLoading] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [error, setError] = useState("")
+
+  // Product State
+  const [scrapedProducts, setScrapedProducts] = useState<any[]>([])
+  const [savedProducts, setSavedProducts] = useState<any[]>([])
 
   useEffect(() => {
     // 1. Get the current window ID so we can identify ourselves
@@ -64,41 +70,230 @@ function SidePanel() {
     setEmail("")
     setPassword("")
     setError("")
+    setScrapedProducts([])
+    setSavedProducts([])
+  }
+
+  const [timeLeft, setTimeLeft] = useState(WAITING_TIME)
+  const [currentTabId, setCurrentTabId] = useState<number | null>(null)
+  const [scrapingSessionId, setScrapingSessionId] = useState(0)
+
+  // Listen for tab changes
+  useEffect(() => {
+    // Initial tab
+    chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+      if (tab?.id) setCurrentTabId(tab.id)
+    })
+
+    const handleTabActivated = (activeInfo: chrome.tabs.TabActiveInfo) => {
+      setCurrentTabId(activeInfo.tabId)
+      // Reset state for new tab
+      setScrapedProducts([])
+      setTimeLeft(WAITING_TIME)
+      setScrapingSessionId(prev => prev + 1)
+    }
+
+    const handleTabUpdated = (tabId: number, changeInfo: chrome.tabs.TabChangeInfo, tab: chrome.tabs.Tab) => {
+      // Only care about the current tab and if it's loading (navigation started)
+      if (tabId === currentTabId && changeInfo.status === 'loading') {
+        console.log("Tab updated (navigation), resetting...", tabId)
+        setScrapedProducts([])
+        setTimeLeft(WAITING_TIME)
+        setScrapingSessionId(prev => prev + 1)
+      }
+    }
+
+    chrome.tabs.onActivated.addListener(handleTabActivated)
+    chrome.tabs.onUpdated.addListener(handleTabUpdated)
+
+    return () => {
+      chrome.tabs.onActivated.removeListener(handleTabActivated)
+      chrome.tabs.onUpdated.removeListener(handleTabUpdated)
+    }
+  }, [currentTabId]) // Depend on currentTabId to closure captures correct ID for update check
+
+  // Automatic scraping effect with progress
+  useEffect(() => {
+    if (!isLoggedIn) return
+
+    // If we switched tabs or updated URL, we want to restart the timer. 
+    console.log("Starting countdown for tab:", currentTabId, "Session:", scrapingSessionId)
+
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          // Trigger scrape
+          triggerScrape()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [isLoggedIn, currentTabId, scrapingSessionId]) // Added scrapingSessionId to force restart
+
+  const triggerScrape = async () => {
+    console.log("Auto-scraping triggered")
+    try {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+      if (tab?.id) {
+        const response = await chrome.tabs.sendMessage(tab.id, { action: "scrape_products" })
+        console.log("Auto-Scrape Response:", response)
+
+        if (Array.isArray(response) && response.length > 0) {
+          if (typeof response[0] !== 'string') {
+            setScrapedProducts(response)
+          } else {
+            console.log("No products detected (received message string).")
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Auto-scraping failed:", error)
+    }
+  }
+
+  const handleAddProduct = (product: any, index: number) => {
+    setSavedProducts((prev) => [...prev, product])
+    setScrapedProducts((prev) => prev.filter((_, i) => i !== index))
   }
 
   // --- Components for each page ---
 
-  const HomePage = () => {
-    const handleScrape = async () => {
-      try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
-        if (tab?.id) {
-          const response = await chrome.tabs.sendMessage(tab.id, { action: "scrape_products" })
-          console.log("Scraped Products:", response)
-        }
-      } catch (error) {
-        console.error("Scraping failed:", error)
-      }
-    }
+  const CircularProgress = ({ seconds }: { seconds: number }) => {
+    const radius = 20
+    const circumference = 2 * Math.PI * radius
+    const progress = ((WAITING_TIME - seconds) / WAITING_TIME) * 100
+    const strokeDashoffset = circumference - (progress / 100) * circumference
 
+    return (
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", margin: "20px 0" }}>
+        <div style={{ position: "relative", width: "50px", height: "50px" }}>
+          <svg width="50" height="50" style={{ transform: "rotate(-90deg)" }}>
+            <circle
+              cx="25"
+              cy="25"
+              r={radius}
+              stroke="#e6e6e6"
+              strokeWidth="4"
+              fill="transparent"
+            />
+            <circle
+              cx="25"
+              cy="25"
+              r={radius}
+              stroke="#4CAF50"
+              strokeWidth="4"
+              fill="transparent"
+              strokeDasharray={circumference}
+              strokeDashoffset={strokeDashoffset}
+              style={{ transition: "stroke-dashoffset 1s linear" }}
+            />
+          </svg>
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: "12px", fontWeight: "bold", color: "#666" }}>
+            {seconds}s
+          </div>
+        </div>
+        <div style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>Scanning...</div>
+      </div>
+    )
+  }
+
+  const HomePage = () => {
     return (
       <div className="main-content">
         <h2 className="auth-title">Home</h2>
-        <p style={{ textAlign: "center", color: "#666" }}>Welcome back!</p>
+
         <div style={{ padding: "20px 0", textAlign: "center" }}>
-          <p>This is your main dashboard.</p>
-          <p>You can add widgets or recent activity here.</p>
-          <button
-            onClick={handleScrape}
-            className="auth-submit-btn"
-            style={{ marginTop: "20px", width: "auto", padding: "10px 20px" }}
-          >
-            Scrape Products
-          </button>
+
+          {/* Automatic scraping active (15s delay) */}
+          {scrapedProducts.length === 0 && timeLeft > 0 && (
+            <CircularProgress seconds={timeLeft} />
+          )}
+
+          {scrapedProducts.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", textAlign: "left" }}>
+              <h3 style={{ fontSize: "16px", margin: "10px 0" }}>Found Products ({scrapedProducts.length})</h3>
+              {scrapedProducts.map((product, index) => (
+                <div key={index} style={{
+                  border: "1px solid #eee",
+                  borderRadius: "8px",
+                  padding: "10px",
+                  backgroundColor: "#fff",
+                  display: "flex",
+                  gap: "10px",
+                  alignItems: "center"
+                }}>
+                  {product.image && (
+                    <img src={product.image} alt={product.title} style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "4px" }} />
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: "bold", fontSize: "14px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {product.title || "Unknown Product"}
+                    </div>
+                    {product.price && <div style={{ fontSize: "12px", color: "#666" }}>{product.price}</div>}
+                  </div>
+                  <button
+                    onClick={() => handleAddProduct(product, index)}
+                    style={{
+                      border: "none",
+                      backgroundColor: "#4CAF50",
+                      color: "white",
+                      borderRadius: "4px",
+                      padding: "5px 10px",
+                      cursor: "pointer",
+                      fontSize: "12px"
+                    }}
+                  >
+                    Add
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ color: "#888", fontSize: "14px", marginTop: "20px" }}>
+              No products found yet. Wait for a moment.
+            </div>
+          )}
+
+          {/* Debug/Visibility for Saved Products */}
+          {savedProducts.length > 0 && (
+            <div style={{ marginTop: "30px", borderTop: "1px solid #eee", paddingTop: "10px" }}>
+              <h4 style={{ fontSize: "14px", color: "#666" }}>Saved Items: {savedProducts.length}</h4>
+            </div>
+          )}
         </div>
       </div>
     )
   }
+
+  const MyProductsPage = () => (
+    <div className="main-content">
+      <h2 className="auth-title">My Products</h2>
+      {savedProducts.length > 0 ? (
+        <div style={{ marginTop: "20px", width: "100%" }}>
+          <ul style={{ listStyle: "none", padding: 0 }}>
+            {savedProducts.map((p, i) => (
+              <li key={i} style={{ padding: "10px", borderBottom: "1px solid #eee", fontSize: "14px", display: 'flex', gap: '10px', alignItems: 'center' }}>
+                {p.image && <img src={p.image} alt={p.title} style={{ width: "40px", height: "40px", objectFit: "cover", borderRadius: "4px" }} />}
+                <div>
+                  <div style={{ fontWeight: '500' }}>{p.title}</div>
+                  {p.price && <div style={{ fontSize: '12px', color: '#666' }}>{p.price}</div>}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <div style={{ padding: "40px 20px", textAlign: "center", color: "#888" }}>
+          <p>No products saved yet.</p>
+          <p style={{ fontSize: "12px" }}>Scrape products from the Home tab to add them here.</p>
+        </div>
+      )}
+    </div>
+  )
 
   const ProfilePage = () => (
     <div className="main-content">
@@ -157,6 +352,18 @@ function SidePanel() {
         </button>
 
         <button
+          className={`nav-item ${currentPath === "/my-products" ? "active" : ""}`}
+          onClick={() => navigate("/my-products")}
+        >
+          <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          <span className="nav-label">Products</span>
+        </button>
+
+        <button
           className={`nav-item ${currentPath === "/profile" ? "active" : ""}`}
           onClick={() => navigate("/profile")}
         >
@@ -188,6 +395,7 @@ function SidePanel() {
           <div style={{ flex: 1, overflowY: "auto" }}>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/my-products" element={<MyProductsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Routes>
