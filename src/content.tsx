@@ -2,6 +2,39 @@ import cssText from "data-text:./style.css"
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import { useEffect, useRef, useState } from "react"
 
+const scrapeProducts = () => {
+  // Generic selector strategy - can be customized based on specific site structure
+  // Looking for common product container patterns
+  const products: any[] = []
+
+  // Try to find product cards
+  const potentialProducts = document.querySelectorAll("article, .product, .product-card, .item, li")
+
+  potentialProducts.forEach((el) => {
+    const title = el.querySelector("h1, h2, h3, h4, .title, .name")?.textContent?.trim()
+    const price = el.querySelector(".price, .amount, span")?.textContent?.trim()
+    const image = el.querySelector("img")?.src
+
+    if (title && (price || image)) {
+      products.push({
+        title,
+        price,
+        image,
+        element: el.tagName
+      })
+    }
+  })
+
+  return products.length > 0 ? products : ["No products found with generic selectors"]
+}
+
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.action === "scrape_products") {
+    const data = scrapeProducts()
+    sendResponse(data)
+  }
+})
+
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"]
 }

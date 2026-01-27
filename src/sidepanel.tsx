@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 
 import "./style.css"
 
@@ -37,10 +38,6 @@ function SidePanel() {
     setError("")
 
     try {
-      // Logic to send user/password to Auth0 login methods
-      // For Resource Owner Password Credentials Grant (not recommended for production but requested logic)
-      // or simply a placeholder for where the Auth0 SDK 'loginWithCredentials' would go.
-
       console.log("Attempting login...", { email })
 
       // Simulating a delay
@@ -69,22 +66,140 @@ function SidePanel() {
     setError("")
   }
 
-  if (isLoggedIn) {
+  // --- Components for each page ---
+
+  const HomePage = () => {
+    const handleScrape = async () => {
+      try {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+        if (tab?.id) {
+          const response = await chrome.tabs.sendMessage(tab.id, { action: "scrape_products" })
+          console.log("Scraped Products:", response)
+        }
+      } catch (error) {
+        console.error("Scraping failed:", error)
+      }
+    }
+
     return (
-      <div className="auth-wrapper">
-        <div className="auth-form" style={{ textAlign: "center" }}>
-          <h2 className="auth-title">Welcome!</h2>
-          <p>You have successfully signed in.</p>
-          <button onClick={handleLogout} className="auth-submit-btn" style={{ backgroundColor: "#f44336" }}>
-            Sign Out
+      <div className="main-content">
+        <h2 className="auth-title">Home</h2>
+        <p style={{ textAlign: "center", color: "#666" }}>Welcome back!</p>
+        <div style={{ padding: "20px 0", textAlign: "center" }}>
+          <p>This is your main dashboard.</p>
+          <p>You can add widgets or recent activity here.</p>
+          <button
+            onClick={handleScrape}
+            className="auth-submit-btn"
+            style={{ marginTop: "20px", width: "auto", padding: "10px 20px" }}
+          >
+            Scrape Products
           </button>
         </div>
       </div>
     )
   }
 
+  const ProfilePage = () => (
+    <div className="main-content">
+      <h2 className="auth-title">Profile</h2>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "10px", marginTop: "20px" }}>
+        <div style={{ width: "80px", height: "80px", borderRadius: "50%", backgroundColor: "#ddd", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "30px", color: "#888" }}>
+          👤
+        </div>
+        <h3 style={{ margin: 0 }}>Admin User</h3>
+        <p style={{ margin: 0, color: "#888" }}>admin@example.com</p>
+      </div>
+    </div>
+  )
+
+  const SettingsPage = () => (
+    <div className="main-content">
+      <h2 className="auth-title">Settings</h2>
+
+      <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+          <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>Dark Mode</span>
+            <input type="checkbox" />
+          </label>
+        </div>
+        <div style={{ padding: "10px", borderBottom: "1px solid #eee" }}>
+          <label style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span>Notifications</span>
+            <input type="checkbox" defaultChecked />
+          </label>
+        </div>
+
+        <button onClick={handleLogout} className="auth-submit-btn" style={{ backgroundColor: "#f44336", marginTop: "20px" }}>
+          Sign Out
+        </button>
+      </div>
+    </div>
+  )
+
+  const BottomNav = () => {
+    const navigate = useNavigate()
+    const location = useLocation()
+    const currentPath = location.pathname
+
+    return (
+      <div className="bottom-nav">
+        <button
+          className={`nav-item ${currentPath === "/" ? "active" : ""}`}
+          onClick={() => navigate("/")}
+        >
+          <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span className="nav-label">Home</span>
+        </button>
+
+        <button
+          className={`nav-item ${currentPath === "/profile" ? "active" : ""}`}
+          onClick={() => navigate("/profile")}
+        >
+          <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span className="nav-label">Profile</span>
+        </button>
+
+        <button
+          className={`nav-item ${currentPath === "/settings" ? "active" : ""}`}
+          onClick={() => navigate("/settings")}
+        >
+          <svg className="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span className="nav-label">Settings</span>
+        </button>
+      </div>
+    )
+  }
+
+  if (isLoggedIn) {
+    return (
+      <div className="auth-wrapper">
+        <MemoryRouter>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Routes>
+          </div>
+          <BottomNav />
+        </MemoryRouter>
+      </div>
+    )
+  }
+
   return (
-    <div className="auth-wrapper">
+    <div className="auth-wrapper login-mode">
       <form className="auth-form" onSubmit={handleLogin}>
         <h2 className="auth-title">Sign In</h2>
 
@@ -144,3 +259,4 @@ function SidePanel() {
 }
 
 export default SidePanel
+
