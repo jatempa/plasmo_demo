@@ -1,9 +1,10 @@
+import { useStorage } from "@plasmohq/storage/hook"
 import { useEffect, useState } from "react"
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom"
 
 import "./style.css"
 
-const WAITING_TIME = 5;
+const WAITING_TIME = 15;
 
 function SidePanel() {
   const [email, setEmail] = useState("")
@@ -15,7 +16,7 @@ function SidePanel() {
 
   // Product State
   const [scrapedProducts, setScrapedProducts] = useState<any[]>([])
-  const [savedProducts, setSavedProducts] = useState<any[]>([])
+  const [savedProducts, setSavedProducts] = useStorage<any[]>("saved_products", [])
 
   useEffect(() => {
     // 1. Get the current window ID so we can identify ourselves

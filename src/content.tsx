@@ -1,3 +1,4 @@
+import { Storage } from "@plasmohq/storage"
 import cssText from "data-text:./style.css"
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import { useEffect, useRef, useState } from "react"
@@ -27,10 +28,10 @@ const scrapeProducts = () => {
 
   return products.length > 0 ? products : ["No products found with generic selectors"]
 }
-
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === "scrape_products") {
     const data = scrapeProducts()
+    new Storage().set("scraped_data", data)
     sendResponse(data)
   }
 })
