@@ -4,9 +4,9 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { BottomNav } from "./components/BottomNav"
+import { ProfileDropdown } from "./components/ProfileDropdown"
 import { HomePage } from "./pages/HomePage"
 import { MyProductsPage } from "./pages/MyProductsPage"
-import { ProfilePage } from "./pages/ProfilePage"
 import {
   getAuth0RedirectUri,
   isAuthSessionValid,
@@ -211,6 +211,9 @@ function SidePanel() {
     return (
       <div className="auth-wrapper">
         <MemoryRouter>
+          <div style={{ padding: "8px 0 0 0" }}>
+            <ProfileDropdown user={user} onLogout={handleLogout} />
+          </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
             <Routes>
               <Route
@@ -228,12 +231,6 @@ function SidePanel() {
               <Route
                 path="/my-products"
                 element={<MyProductsPage savedProducts={savedProducts} />}
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProfilePage user={user} handleLogout={handleLogout} />
-                }
               />
             </Routes>
           </div>

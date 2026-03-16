@@ -1,7 +1,7 @@
 import React from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 
-import { HomeIcon, ProductsIcon, ProfileIcon } from "~src/utils/svgs"
+import { HomeIcon, ProductsIcon } from "~src/utils/svgs"
 
 export const BottomNav = () => {
   const navigate = useNavigate()
@@ -18,11 +18,6 @@ export const BottomNav = () => {
       path: "/my-products",
       label: "Products",
       icon: <ProductsIcon />
-    },
-    {
-      path: "/profile",
-      label: "Profile",
-      icon: <ProfileIcon />
     }
   ]
 
