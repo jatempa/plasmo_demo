@@ -4,9 +4,9 @@ import { MemoryRouter, Route, Routes } from "react-router-dom"
 import { useStorage } from "@plasmohq/storage/hook"
 
 import { BottomNav } from "./components/BottomNav"
-import { HomePage } from "./components/HomePage"
-import { MyProductsPage } from "./components/MyProductsPage"
-import { ProfilePage } from "./components/ProfilePage"
+import { HomePage } from "./pages/HomePage"
+import { MyProductsPage } from "./pages/MyProductsPage"
+import { ProfilePage } from "./pages/ProfilePage"
 import {
   getAuth0RedirectUri,
   isAuthSessionValid,
