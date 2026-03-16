@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react"
 import { MemoryRouter, Route, Routes } from "react-router-dom"
 
+import { Storage } from "@plasmohq/storage"
 import { useStorage } from "@plasmohq/storage/hook"
+
+const storage = new Storage({ area: "local" })
 
 import { BottomNav } from "./components/BottomNav"
 import { ProfileDropdown } from "./components/ProfileDropdown"
@@ -23,7 +26,7 @@ const WAITING_TIME = 15
 
 function SidePanel() {
   const [authSession, setAuthSession] = useStorage<AuthSession | null>(
-    "auth_session",
+    { key: "auth_session", instance: storage },
     null
   )
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -34,7 +37,7 @@ function SidePanel() {
   // Product State
   const [scrapedProducts, setScrapedProducts] = useState<any[]>([])
   const [savedProducts, setSavedProducts] = useStorage<any[]>(
-    "saved_products",
+    { key: "saved_products", instance: storage },
     []
   )
 
