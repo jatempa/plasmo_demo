@@ -31,6 +31,8 @@
       "<all_urls>"
     ],
     "permissions": [
+      "identity",
+      "storage",
       "sidePanel"
     ],
     "side_panel": {

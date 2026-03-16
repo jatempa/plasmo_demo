@@ -21,6 +21,7 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
 
 out/
 build/
@@ -30,4 +31,4 @@ dist/
 .plasmo
 
 # typescript
-.tsbuildinfo
+*.tsbuildinfo
